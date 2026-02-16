@@ -1,3 +1,4 @@
+import os
 from decimal import Decimal, ROUND_HALF_UP
 
 import stripe
@@ -27,6 +28,8 @@ router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(requir
 
 @router.post("/products")
 def create_product(payload: dict, db: Session = Depends(get_db)):
+    if db.query(Product).filter(Product.slug == payload["slug"]).first():
+        raise HTTPException(400, "Slug already exists")
     p = Product(
         name=payload["name"],
         slug=payload["slug"],
@@ -37,6 +40,44 @@ def create_product(payload: dict, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(p)
     return {"id": p.id}
+
+
+@router.get("/products")
+def admin_products(db: Session = Depends(get_db)):
+    rows = db.query(Product).order_by(Product.id.desc()).all()
+    return [
+        {
+            "id": p.id,
+            "name": p.name,
+            "slug": p.slug,
+            "description": p.description,
+            "lead_time_days": p.lead_time_days,
+            "is_active": p.is_active,
+            "variants_count": len(p.variants),
+            "images_count": len(p.images),
+        }
+        for p in rows
+    ]
+
+
+@router.get("/products/{product_id}")
+def admin_product(product_id: int, db: Session = Depends(get_db)):
+    p = db.get(Product, product_id)
+    if not p:
+        raise HTTPException(404, "Not found")
+    return {
+        "id": p.id,
+        "name": p.name,
+        "slug": p.slug,
+        "description": p.description,
+        "lead_time_days": p.lead_time_days,
+        "is_active": p.is_active,
+        "variants": [
+            {"id": v.id, "size": v.size, "material": v.material, "sku": v.sku, "price_cad": float(v.price_cad), "is_active": v.is_active}
+            for v in p.variants
+        ],
+        "images": [{"id": i.id, "url": i.url, "alt_text": i.alt_text, "position": i.position} for i in sorted(p.images, key=lambda x: x.position)],
+    }
 
 
 @router.patch("/products/{product_id}")
@@ -51,11 +92,23 @@ def patch_product(product_id: int, payload: dict, db: Session = Depends(get_db))
     return {"ok": True}
 
 
+@router.delete("/products/{product_id}")
+def delete_product(product_id: int, db: Session = Depends(get_db)):
+    p = db.get(Product, product_id)
+    if not p:
+        raise HTTPException(404, "Not found")
+    db.delete(p)
+    db.commit()
+    return {"ok": True}
+
+
 @router.post("/products/{product_id}/variants")
 def add_variant(product_id: int, payload: dict, db: Session = Depends(get_db)):
     p = db.get(Product, product_id)
     if not p:
         raise HTTPException(404, "Product not found")
+    if db.query(ProductVariant).filter(ProductVariant.sku == payload["sku"]).first():
+        raise HTTPException(400, "SKU already exists")
     v = ProductVariant(
         product_id=product_id,
         size=payload["size"],
@@ -67,6 +120,19 @@ def add_variant(product_id: int, payload: dict, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(v)
     return {"id": v.id}
+
+
+@router.delete("/products/{product_id}/variants/{variant_id}")
+def delete_variant(product_id: int, variant_id: int, db: Session = Depends(get_db)):
+    p = db.get(Product, product_id)
+    if not p:
+        raise HTTPException(404, "Product not found")
+    v = db.get(ProductVariant, variant_id)
+    if not v or v.product_id != product_id:
+        raise HTTPException(404, "Variant not found")
+    db.delete(v)
+    db.commit()
+    return {"ok": True}
 
 
 @router.post("/products/{product_id}/images")
@@ -82,6 +148,29 @@ async def add_product_image(product_id: int, image: UploadFile = File(...), db: 
     db.commit()
     db.refresh(pi)
     return {"id": pi.id, "url": url, "storage_key": key}
+
+
+@router.delete("/products/{product_id}/images/{image_id}")
+def delete_product_image(product_id: int, image_id: int, db: Session = Depends(get_db)):
+    p = db.get(Product, product_id)
+    if not p:
+        raise HTTPException(404, "Product not found")
+    img = db.get(ProductImage, image_id)
+    if not img or img.product_id != product_id:
+        raise HTTPException(404, "Image not found")
+
+    if img.url and img.url.startswith("/uploads/"):
+        local_rel = img.url[len("/uploads/") :]
+        local_path = os.path.join(settings.upload_dir, local_rel)
+        if os.path.isfile(local_path):
+            try:
+                os.remove(local_path)
+            except OSError:
+                pass
+
+    db.delete(img)
+    db.commit()
+    return {"ok": True}
 
 
 @router.get("/orders")

@@ -1,30 +1,10 @@
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Container from "@/components/Container";
+import { siteContent } from "@/content/siteContent";
 import HeroClinicStyle from "@/components/HeroClinicStyle";
 import ProductCard from "@/components/ProductCard";
 import { apiGet } from "@/lib/api";
-
-const makeItems = [
-  {
-    title: "Functional Prototypes",
-    body: "Rapid iteration with PLA, PETG, TPU and engineering materials for practical fit tests.",
-  },
-  {
-    title: "Laser-Cut Components",
-    body: "Clean, repeatable cuts for custom parts, branding inserts, and workshop fixtures.",
-  },
-  {
-    title: "Engraved Products",
-    body: "Personalized keychains, plaques, and production marks for business-ready output.",
-  },
-];
-
-const steps = [
-  { title: "Upload", body: "Submit STL/3MF/STEP or image files and project notes." },
-  { title: "Quote / Pay", body: "Receive pricing within 48 hours and confirm via Stripe or e-Transfer." },
-  { title: "Produce / Ship", body: "We fabricate, quality-check, and ship across Canada from Toronto/GTA." },
-];
 
 export default async function Home() {
   const products = await apiGet("/products").catch(() => []);
@@ -39,14 +19,15 @@ export default async function Home() {
           <div className="mb-8 flex items-end justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Capabilities</p>
-              <h2 className="mt-2 text-3xl font-extrabold text-slate-900">What we make</h2>
+              <h2 className="mt-2 text-3xl font-extrabold text-slate-900">{siteContent.home.whatWeMake.title}</h2>
+              <p className="mt-3 text-slate-600">{siteContent.home.whatWeMake.intro}</p>
             </div>
           </div>
           <div className="grid gap-5 md:grid-cols-3">
-            {makeItems.map((item) => (
+            {siteContent.home.whatWeMake.cards.map((item) => (
               <Card key={item.title}>
                 <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">{item.body}</p>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{item.text}</p>
               </Card>
             ))}
           </div>
@@ -56,13 +37,13 @@ export default async function Home() {
       <section className="bg-white py-14">
         <Container>
           <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Simple Process</p>
-          <h2 className="mt-2 text-3xl font-extrabold text-slate-900">How it works</h2>
+          <h2 className="mt-2 text-3xl font-extrabold text-slate-900">{siteContent.home.howItWorks.title}</h2>
           <div className="mt-8 grid gap-5 md:grid-cols-3">
-            {steps.map((step, idx) => (
+            {siteContent.home.howItWorks.steps.map((step, idx) => (
               <Card key={step.title}>
                 <p className="text-sm font-semibold text-blue-700">Step {idx + 1}</p>
                 <h3 className="mt-2 text-xl font-bold text-slate-900">{step.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">{step.body}</p>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{step.text}</p>
               </Card>
             ))}
           </div>
@@ -74,10 +55,11 @@ export default async function Home() {
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Storefront</p>
-              <h2 className="mt-2 text-3xl font-extrabold text-slate-900">Featured products</h2>
+              <h2 className="mt-2 text-3xl font-extrabold text-slate-900">{siteContent.home.featured.heading}</h2>
+              <p className="mt-3 text-slate-600">{siteContent.home.featured.subtext}</p>
             </div>
-            <Button href="/shop" variant="secondary">
-              Browse all
+            <Button href={siteContent.home.featured.cta.href} variant="secondary">
+              {siteContent.home.featured.cta.label}
             </Button>
           </div>
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -91,6 +73,19 @@ export default async function Home() {
                   </Card>
                 ))}
           </div>
+        </Container>
+      </section>
+
+      <section className="bg-white py-14">
+        <Container>
+          <h2 className="text-3xl font-extrabold text-slate-900">{siteContent.home.why.heading}</h2>
+          <ul className="mt-6 grid gap-3 text-sm text-slate-700">
+            {siteContent.home.why.bullets.map((bullet) => (
+              <li key={bullet} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                {bullet}
+              </li>
+            ))}
+          </ul>
         </Container>
       </section>
     </>

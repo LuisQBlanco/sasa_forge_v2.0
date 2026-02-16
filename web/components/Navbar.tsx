@@ -4,16 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import Container from "@/components/Container";
-
-const navItems = [
-  { label: "Home", href: "/" },
-  { label: "Shop", href: "/shop" },
-  { label: "Get a Quote", href: "/quote" },
-  { label: "Track Order", href: "/track/order" },
-  { label: "Track Quote", href: "/track/quote" },
-  { label: "Contact", href: "/contact" },
-  { label: "Admin", href: "/admin" },
-];
+import { siteContent } from "@/content/siteContent";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -25,7 +16,7 @@ export default function Navbar() {
           SASA <span className="text-blue-600">Forge</span>
         </Link>
         <div className="hidden items-center gap-1 lg:flex">
-          {navItems.map((item) => {
+          {siteContent.nav.map((item) => {
             const active = pathname === item.href;
             return (
               <Link
@@ -43,7 +34,7 @@ export default function Navbar() {
       </Container>
       <Container className="pb-3 lg:hidden">
         <div className="flex flex-wrap gap-2">
-          {navItems.map((item) => (
+          {siteContent.nav.map((item) => (
             <Link key={item.href} href={item.href} className="rounded-full border bg-white px-3 py-1 text-xs font-medium text-slate-700">
               {item.label}
             </Link>

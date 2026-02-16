@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { API } from "@/lib/api";
 
 import Card from "@/components/Card";
 import Button from "@/components/Button";
@@ -9,16 +10,23 @@ type Product = {
   slug: string;
   name: string;
   description?: string;
+  images?: { url: string }[];
   variants?: Variant[];
 };
 
 export default function ProductCard({ product }: { product: Product }) {
   const minPrice = product.variants && product.variants.length > 0 ? Math.min(...product.variants.map((v) => Number(v.price_cad))) : null;
+  const hero = product.images && product.images.length > 0 ? product.images[0].url : null;
 
   return (
     <Card className="flex h-full flex-col justify-between">
       <div>
-        <div className="mb-4 h-40 rounded-xl bg-gradient-to-br from-blue-100 via-sky-50 to-indigo-100" />
+        {hero ? (
+          // Use regular img here because URL can be API-hosted upload path.
+          <img src={`${API}${hero}`} alt={product.name} className="mb-4 h-40 w-full rounded-xl object-cover" />
+        ) : (
+          <div className="mb-4 h-40 rounded-xl bg-gradient-to-br from-blue-100 via-sky-50 to-indigo-100" />
+        )}
         <h3 className="text-lg font-semibold text-slate-900">{product.name}</h3>
         <p className="mt-2 line-clamp-2 text-sm text-slate-600">{product.description || "Customizable product by SASA Forge."}</p>
       </div>
