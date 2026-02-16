@@ -215,6 +215,14 @@ export const siteContent = {
     serviceNote: "We operate as a home-based studio—no public pickup. Shipping only.",
     cta: { label: "Get a Quote", href: "/quote" },
   },
+  policies: {
+    returns: [
+      "Custom-made items are non-refundable except for defects.",
+      "If there’s a defect, contact us within 7 days of delivery with photos.",
+    ],
+    privacy: ["We only use your data to process quotes/orders and provide support."],
+    terms: ["Lead times vary by material and queue. Shipping timelines depend on carriers."],
+  },
   admin: {
     login: {
       title: "Admin Login",

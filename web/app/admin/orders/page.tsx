@@ -21,12 +21,22 @@ export default function AdminOrders() {
   const [rows, setRows] = useState<Row[]>([]);
   const [drafts, setDrafts] = useState<Record<number, { status: string; tracking: string }>>({});
   const [message, setMessage] = useState("");
+  const [needsLogin, setNeedsLogin] = useState(false);
 
   async function load() {
     const t = localStorage.getItem("admin_token");
+    if (!t) {
+      setNeedsLogin(true);
+      return;
+    }
     const res = await fetch(`${API}/admin/orders`, { headers: { Authorization: `Bearer ${t}` } });
+    if (res.status === 401 || res.status === 403) {
+      setNeedsLogin(true);
+      return;
+    }
     const data = await res.json();
     if (Array.isArray(data)) {
+      setNeedsLogin(false);
       setRows(data);
       const next: Record<number, { status: string; tracking: string }> = {};
       data.forEach((r: Row) => {
@@ -42,6 +52,10 @@ export default function AdminOrders() {
 
   async function save(id: number) {
     const t = localStorage.getItem("admin_token");
+    if (!t) {
+      setNeedsLogin(true);
+      return;
+    }
     const draft = drafts[id];
     const res = await fetch(`${API}/admin/orders/${id}`, {
       method: "PATCH",
@@ -59,6 +73,16 @@ export default function AdminOrders() {
 
   return (
     <AdminShell title={siteContent.admin.sidebar[3]} subtitle="Update status and tracking numbers.">
+      {needsLogin && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          Admin session required. Please sign in first.
+          <div className="mt-3">
+            <Button href="/admin/login" variant="secondary" className="px-4 py-2 text-xs">
+              Go To Admin Login
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="space-y-4">
         {rows.map((row) => (
           <div key={row.id} className="rounded-2xl border border-slate-200 p-4">
@@ -66,7 +90,7 @@ export default function AdminOrders() {
               <p className="font-semibold text-slate-900">
                 #{row.id} · {row.public_code}
               </p>
-              <p className="text-sm font-semibold text-blue-700">CAD {row.total_amount}</p>
+              <p className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700">CAD {row.total_amount}</p>
             </div>
             <div className="grid gap-3 md:grid-cols-[220px_1fr_160px]">
               <select

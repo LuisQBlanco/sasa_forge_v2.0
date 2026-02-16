@@ -21,12 +21,22 @@ export default function AdminQuotes() {
   const [priceInputs, setPriceInputs] = useState<Record<number, string>>({});
   const [statusInputs, setStatusInputs] = useState<Record<number, string>>({});
   const [message, setMessage] = useState("");
+  const [needsLogin, setNeedsLogin] = useState(false);
 
   async function load() {
     const t = localStorage.getItem("admin_token");
+    if (!t) {
+      setNeedsLogin(true);
+      return;
+    }
     const res = await fetch(`${API}/admin/quotes`, { headers: { Authorization: `Bearer ${t}` } });
+    if (res.status === 401 || res.status === 403) {
+      setNeedsLogin(true);
+      return;
+    }
     const data = await res.json();
     if (Array.isArray(data)) {
+      setNeedsLogin(false);
       setRows(data);
       const p: Record<number, string> = {};
       const s: Record<number, string> = {};
@@ -45,6 +55,10 @@ export default function AdminQuotes() {
 
   async function updateStatus(id: number) {
     const t = localStorage.getItem("admin_token");
+    if (!t) {
+      setNeedsLogin(true);
+      return;
+    }
     const res = await fetch(`${API}/admin/quotes/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
@@ -61,6 +75,10 @@ export default function AdminQuotes() {
 
   async function setPrice(id: number) {
     const t = localStorage.getItem("admin_token");
+    if (!t) {
+      setNeedsLogin(true);
+      return;
+    }
     const res = await fetch(`${API}/admin/quotes/${id}/price`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
@@ -80,6 +98,10 @@ export default function AdminQuotes() {
 
   async function createFinalLink(id: number) {
     const t = localStorage.getItem("admin_token");
+    if (!t) {
+      setNeedsLogin(true);
+      return;
+    }
     const res = await fetch(`${API}/admin/quotes/${id}/final-payment-link`, {
       method: "POST",
       headers: { Authorization: `Bearer ${t}` },
@@ -97,6 +119,16 @@ export default function AdminQuotes() {
 
   return (
     <AdminShell title={siteContent.admin.sidebar[2]} subtitle="Set pricing, update status, and generate payment links.">
+      {needsLogin && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          Admin session required. Please sign in first.
+          <div className="mt-3">
+            <Button href="/admin/login" variant="secondary" className="px-4 py-2 text-xs">
+              Go To Admin Login
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="space-y-4">
         {rows.map((row) => (
           <div key={row.id} className="rounded-2xl border border-slate-200 p-4">
@@ -104,7 +136,7 @@ export default function AdminQuotes() {
               <p className="font-semibold text-slate-900">
                 #{row.id} · {row.public_code}
               </p>
-              <p className="text-sm text-slate-500">Current total: {row.priced_total ?? "-"}</p>
+              <p className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700">Current total: {row.priced_total ?? "-"}</p>
             </div>
             <div className="grid gap-3 lg:grid-cols-[220px_180px_1fr]">
               <select

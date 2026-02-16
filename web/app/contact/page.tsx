@@ -1,15 +1,14 @@
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Container from "@/components/Container";
+import SectionHeader from "@/components/SectionHeader";
 import { siteContent } from "@/content/siteContent";
 
 export default function Contact() {
   return (
     <section className="bg-clinic py-12">
       <Container>
-        <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Contact</p>
-        <h1 className="mt-2 text-4xl font-extrabold text-slate-900">{siteContent.contact.title}</h1>
-        <p className="mt-3 text-slate-600">{siteContent.contact.subtitle}</p>
+        <SectionHeader kicker="Contact" title={siteContent.contact.title} description={siteContent.contact.subtitle} />
         <div className="mt-8 grid gap-5 md:grid-cols-3">
           <Card>
             <h2 className="text-lg font-bold text-slate-900">Email</h2>

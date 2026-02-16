@@ -6,6 +6,7 @@ import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Container from "@/components/Container";
 import { siteContent } from "@/content/siteContent";
+import SectionHeader from "@/components/SectionHeader";
 import { API } from "@/lib/api";
 
 export default function TrackOrder() {
@@ -15,7 +16,12 @@ export default function TrackOrder() {
 
   async function track() {
     setError("");
-    const res = await fetch(`${API}/track/order/${code}`);
+    if (!code.trim()) {
+      setError("Please enter an order code.");
+      setData(null);
+      return;
+    }
+    const res = await fetch(`${API}/track/order/${encodeURIComponent(code.trim())}`);
     const body = await res.json();
     if (!res.ok) {
       setError(body.detail || "Not found");
@@ -28,9 +34,7 @@ export default function TrackOrder() {
   return (
     <section className="bg-clinic py-12">
       <Container className="max-w-4xl">
-        <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Tracking</p>
-        <h1 className="mt-2 text-4xl font-extrabold text-slate-900">{siteContent.trackOrder.title}</h1>
-        <p className="mt-3 text-slate-600">{siteContent.trackOrder.subtitle}</p>
+        <SectionHeader kicker="Tracking" title={siteContent.trackOrder.title} description={siteContent.trackOrder.subtitle} />
         <Card className="mt-6">
           <label className="text-sm font-medium text-slate-700">
             {siteContent.trackOrder.inputLabel}
@@ -49,7 +53,9 @@ export default function TrackOrder() {
         {error && <p className="mt-4 text-sm font-medium text-rose-600">{error}</p>}
         {data && (
           <Card className="mt-6">
-            <h2 className="text-lg font-bold text-slate-900">{siteContent.trackOrder.labels.status}: {data.status}</h2>
+            <h2 className="text-lg font-bold text-slate-900">
+              {siteContent.trackOrder.labels.status}: <span className="rounded-full bg-blue-50 px-2.5 py-1 text-sm text-blue-700">{data.status}</span>
+            </h2>
             <div className="mt-3 grid gap-2 text-sm text-slate-700">
               <p>
                 <span className="font-semibold">{siteContent.trackOrder.labels.lastUpdated}: </span>

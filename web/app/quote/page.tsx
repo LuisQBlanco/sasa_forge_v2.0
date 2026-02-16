@@ -1,31 +1,33 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Container from "@/components/Container";
 import { siteContent } from "@/content/siteContent";
+import SectionHeader from "@/components/SectionHeader";
 import { API } from "@/lib/api";
 
 type SubmitState = "idle" | "loading" | "success" | "error";
 
 export default function QuotePage() {
-  const params = useSearchParams();
-  const prefillProduct = params.get("product");
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [material, setMaterial] = useState("PLA");
   const [deadline, setDeadline] = useState("");
-  const [notes, setNotes] = useState(prefillProduct ? `Product reference: ${prefillProduct}` : "");
+  const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [code, setCode] = useState("");
   const [state, setState] = useState<SubmitState>("idle");
 
   const canSubmit = useMemo(() => name.trim() && email.trim(), [name, email]);
+
+  useEffect(() => {
+    const prefillProduct = new URLSearchParams(window.location.search).get("product");
+    if (prefillProduct) setNotes(`Product reference: ${prefillProduct}`);
+  }, []);
 
   async function submitQuote() {
     if (!canSubmit) return;
@@ -67,9 +69,7 @@ export default function QuotePage() {
     <section className="bg-clinic py-12">
       <Container className="grid gap-6 lg:grid-cols-2">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Custom Work</p>
-          <h1 className="mt-2 text-4xl font-extrabold text-slate-900">{siteContent.quote.title}</h1>
-          <p className="mt-3 text-slate-600">{siteContent.quote.subtitle}</p>
+          <SectionHeader kicker="Custom Work" title={siteContent.quote.title} description={siteContent.quote.subtitle} />
           <Card className="mt-6 space-y-2">
             <p className="text-sm text-slate-600">{siteContent.quote.uploadHelper}</p>
             <p className="text-sm text-slate-600">{siteContent.quote.processNote}</p>
@@ -107,7 +107,15 @@ export default function QuotePage() {
               {siteContent.quote.fields.notes}
               <textarea className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} />
             </label>
-            <input type="file" className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+            <label className="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-3 py-4 text-center text-sm text-slate-600 transition hover:border-blue-300 hover:bg-blue-50/40">
+              Upload file
+              <input
+                type="file"
+                accept=".stl,.3mf,.step,.png,.jpg,.jpeg"
+                className="mt-2 block w-full text-xs"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+              />
+            </label>
             <div className="pt-2">
               <Button onClick={submitQuote} className={!canSubmit || state === "loading" ? "pointer-events-none opacity-60" : ""}>
                 {siteContent.quote.submit}

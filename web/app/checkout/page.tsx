@@ -7,13 +7,21 @@ import Card from "@/components/Card";
 import Container from "@/components/Container";
 import { useCart } from "@/components/CartProvider";
 import { siteContent } from "@/content/siteContent";
+import SectionHeader from "@/components/SectionHeader";
 import { apiPost } from "@/lib/api";
 
 export default function Checkout() {
   const { items, clear } = useCart();
   const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState<"" | "stripe" | "interac">("");
 
   async function submit(payment_method: "stripe" | "interac") {
+    if (items.length === 0) {
+      setMsg("No cart lines. Add products before checkout.");
+      return;
+    }
+    setBusy(payment_method);
+    setMsg("");
     const body = {
       customer_name: "Guest Customer",
       customer_email: "guest@example.com",
@@ -28,23 +36,30 @@ export default function Checkout() {
       cart_lines: items.map((i) => ({ variant_id: i.variant_id, quantity: i.quantity })),
     };
 
-    const res = await apiPost("/checkout/session", body);
-    if (res.checkout_url) {
-      window.location.href = res.checkout_url;
-      return;
+    try {
+      const res = await apiPost("/checkout/session", body);
+      if (res.checkout_url) {
+        window.location.href = res.checkout_url;
+        return;
+      }
+      if (res.status && res.instructions) {
+        setMsg(`${res.status}: ${res.instructions} -> ${res.recipient}`);
+        clear();
+        return;
+      }
+      setMsg(res.detail || "Checkout failed. Please verify cart items and try again.");
+    } catch {
+      setMsg("Checkout request failed. Please try again.");
+    } finally {
+      setBusy("");
     }
-
-    setMsg(`${res.status}: ${res.instructions} -> ${res.recipient}`);
-    clear();
   }
 
   return (
     <section className="bg-clinic py-12">
       <Container className="grid gap-6 lg:grid-cols-2">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Payment</p>
-          <h1 className="mt-2 text-4xl font-extrabold text-slate-900">{siteContent.checkout.title}</h1>
-          <p className="mt-3 text-slate-600">{siteContent.checkout.paymentOptionsText}</p>
+          <SectionHeader kicker="Payment" title={siteContent.checkout.title} description={siteContent.checkout.paymentOptionsText} />
           <Card className="mt-6">
             <h2 className="text-lg font-bold text-slate-900">Order summary</h2>
             <div className="mt-4 space-y-3">
@@ -65,8 +80,10 @@ export default function Checkout() {
           <p className="mt-2 text-sm text-slate-600">{siteContent.checkout.stripeNote}</p>
           <p className="mt-1 text-sm text-slate-600">{siteContent.checkout.interacInstructions}</p>
           <div className="mt-5 grid gap-3">
-            <Button onClick={() => submit("stripe")}>{siteContent.checkout.buttons.stripe}</Button>
-            <Button onClick={() => submit("interac")} variant="secondary">
+            <Button onClick={() => submit("stripe")} className={busy ? "pointer-events-none opacity-70" : ""}>
+              {busy === "stripe" ? "Redirecting..." : siteContent.checkout.buttons.stripe}
+            </Button>
+            <Button onClick={() => submit("interac")} variant="secondary" className={busy ? "pointer-events-none opacity-70" : ""}>
               {siteContent.checkout.buttons.interac}
             </Button>
           </div>

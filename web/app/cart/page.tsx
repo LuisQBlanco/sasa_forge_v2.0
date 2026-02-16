@@ -5,6 +5,7 @@ import Link from "next/link";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import Container from "@/components/Container";
+import SectionHeader from "@/components/SectionHeader";
 import { useCart } from "@/components/CartProvider";
 import { siteContent } from "@/content/siteContent";
 
@@ -18,11 +19,7 @@ export default function CartPage() {
   return (
     <section className="bg-clinic py-12">
       <Container>
-        <div className="mb-8">
-          <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">Checkout</p>
-          <h1 className="mt-2 text-4xl font-extrabold text-slate-900">{siteContent.cart.title}</h1>
-          <p className="mt-3 text-slate-600">{siteContent.cart.subtext}</p>
-        </div>
+        <SectionHeader kicker="Checkout" title={siteContent.cart.title} description={siteContent.cart.subtext} />
         <Card>
           {items.length === 0 ? (
             <div className="space-y-4">
@@ -33,7 +30,7 @@ export default function CartPage() {
             <>
               <div className="space-y-3">
                 {items.map((i) => (
-                  <div key={i.variant_id} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-4">
+                  <div key={i.variant_id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-4">
                     <div>
                       <p className="font-semibold text-slate-900">{i.name}</p>
                       <p className="text-sm text-slate-500">Qty: {i.quantity}</p>

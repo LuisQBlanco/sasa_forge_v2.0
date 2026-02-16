@@ -64,17 +64,26 @@ export default function AdminProducts() {
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageMessage, setImageMessage] = useState("");
+  const [needsLogin, setNeedsLogin] = useState(false);
 
   const token = typeof window !== "undefined" ? localStorage.getItem("admin_token") : null;
   const selected = useMemo(() => products.find((p) => p.id === selectedId) || null, [products, selectedId]);
 
   async function refreshProducts() {
-    if (!token) return;
+    if (!token) {
+      setNeedsLogin(true);
+      return;
+    }
     const res = await fetch(`${API}/admin/products`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (res.status === 401 || res.status === 403) {
+      setNeedsLogin(true);
+      return;
+    }
     const data = await res.json();
     if (Array.isArray(data)) {
+      setNeedsLogin(false);
       setProducts(data);
       if (data.length > 0 && (selectedId === null || !data.some((p: ProductRow) => p.id === selectedId))) {
         setSelectedId(data[0].id);
@@ -87,7 +96,10 @@ export default function AdminProducts() {
   }
 
   async function refreshSelectedDetails(productId: number) {
-    if (!token) return;
+    if (!token) {
+      setNeedsLogin(true);
+      return;
+    }
     const res = await fetch(`${API}/admin/products/${productId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -125,6 +137,7 @@ export default function AdminProducts() {
   async function createProduct() {
     setCreateMessage("");
     if (!token) {
+      setNeedsLogin(true);
       setCreateMessage("Please login first.");
       return;
     }
@@ -155,6 +168,7 @@ export default function AdminProducts() {
   async function saveEdit() {
     setEditMessage("");
     if (!token || !selected) {
+      if (!token) setNeedsLogin(true);
       setEditMessage("Select a product and login.");
       return;
     }
@@ -202,6 +216,7 @@ export default function AdminProducts() {
   async function addVariant() {
     setVariantMessage("");
     if (!token || !selected) {
+      if (!token) setNeedsLogin(true);
       setVariantMessage("Select a product and login.");
       return;
     }
@@ -248,6 +263,7 @@ export default function AdminProducts() {
   async function uploadImage() {
     setImageMessage("");
     if (!token || !selected || !imageFile) {
+      if (!token) setNeedsLogin(true);
       setImageMessage("Select a product and choose an image.");
       return;
     }
@@ -291,6 +307,16 @@ export default function AdminProducts() {
 
   return (
     <AdminShell title={siteContent.admin.sidebar[1]} subtitle="Create products, add descriptions/images/variants, and remove records.">
+      {needsLogin && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          Admin session required. Please sign in first.
+          <div className="mt-3">
+            <Button href="/admin/login" variant="secondary" className="px-4 py-2 text-xs">
+              Go To Admin Login
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="space-y-8">
         <div className="rounded-2xl border border-slate-200 p-4">
           <h2 className="text-lg font-bold text-slate-900">Create Product</h2>

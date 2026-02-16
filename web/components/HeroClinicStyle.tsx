@@ -22,7 +22,7 @@ export default function HeroClinicStyle() {
             </Button>
           </div>
           <Card className="flex items-center gap-4 p-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white">⚡</div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">QQ</div>
             <div>
               <p className="text-sm text-slate-500">Quick Quote</p>
               <a href={`mailto:${siteContent.global.email}`} className="block text-sm font-semibold text-slate-900 hover:text-blue-700">
@@ -35,16 +35,17 @@ export default function HeroClinicStyle() {
           </Card>
         </div>
         <div className="relative">
-          <div className="relative min-h-[380px] overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-100 via-white to-blue-200 p-8 shadow-xl shadow-blue-100">
-            <div className="absolute -left-6 top-8 h-24 w-24 rounded-full bg-blue-300/30" />
+          <div className="relative min-h-[420px] overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-200 via-sky-50 to-indigo-100 p-8 shadow-xl shadow-blue-100">
+            <div className="absolute -left-8 top-8 h-28 w-28 rounded-full bg-blue-300/30" />
             <div className="absolute -right-10 bottom-8 h-28 w-28 rounded-full bg-blue-300/30" />
+            <div className="absolute inset-6 rounded-2xl border border-white/70 bg-white/40" />
             <div className="relative z-10 space-y-3">
-              <Card className="max-w-[220px]">
+              <Card className="max-w-[240px]">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">{siteContent.home.helper.title}</p>
                 <p className="mt-1 text-lg font-bold text-slate-900">{siteContent.home.helper.text}</p>
                 <p className="text-sm text-slate-500">{siteContent.brand.serviceArea}</p>
               </Card>
-              <div className="mt-24 rounded-2xl border border-white/60 bg-white/80 p-6 shadow-lg">
+              <div className="mt-24 rounded-2xl border border-white/60 bg-white/85 p-6 shadow-lg">
                 <p className="text-sm text-slate-600">{siteContent.brand.shipping}</p>
               </div>
               <Card className="max-w-[160px]">

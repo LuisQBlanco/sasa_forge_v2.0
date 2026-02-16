@@ -9,8 +9,8 @@ import { siteContent } from "@/content/siteContent";
 import { API } from "@/lib/api";
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState("admin@test.com");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
 
@@ -47,6 +47,7 @@ export default function AdminLogin() {
           placeholder="Password"
         />
         <Button onClick={login}>{siteContent.admin.login.button}</Button>
+        <p className="text-xs text-slate-500">Create an owner account via `python scripts/create_admin_user.py` inside the API container.</p>
         {error && <p className="text-sm font-medium text-rose-600">{error}</p>}
       </div>
     </AdminShell>

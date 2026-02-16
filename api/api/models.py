@@ -8,6 +8,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from api.db import Base
 
 
+def _enum_values(enum_cls):
+    return [member.value for member in enum_cls]
+
+
 class UserRole(str, Enum):
     OWNER = "OWNER"
     STAFF = "STAFF"
@@ -52,7 +56,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
-    role: Mapped[UserRole] = mapped_column(SAEnum(UserRole, name="userrole"))
+    role: Mapped[UserRole] = mapped_column(SAEnum(UserRole, name="userrole", values_callable=_enum_values))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -121,7 +125,7 @@ class Quote(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     public_code: Mapped[str] = mapped_column(String(24), unique=True, index=True)
     customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"))
-    status: Mapped[QuoteStatus] = mapped_column(SAEnum(QuoteStatus, name="quotestatus"), default=QuoteStatus.NEW)
+    status: Mapped[QuoteStatus] = mapped_column(SAEnum(QuoteStatus, name="quotestatus", values_callable=_enum_values), default=QuoteStatus.NEW)
     material: Mapped[str] = mapped_column(String(40))
     deadline: Mapped[str | None] = mapped_column(Date, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -152,7 +156,7 @@ class Order(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     public_code: Mapped[str] = mapped_column(String(24), unique=True, index=True)
     customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"))
-    status: Mapped[OrderStatus] = mapped_column(SAEnum(OrderStatus, name="orderstatus"), default=OrderStatus.PAID)
+    status: Mapped[OrderStatus] = mapped_column(SAEnum(OrderStatus, name="orderstatus", values_callable=_enum_values), default=OrderStatus.PAID)
     tracking_number: Mapped[str | None] = mapped_column(String(120), nullable=True)
     shipping_method: Mapped[str] = mapped_column(String(40), default="carrier_shipping")
     shipping_name: Mapped[str] = mapped_column(String(120))
@@ -187,9 +191,9 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    provider: Mapped[PaymentProvider] = mapped_column(SAEnum(PaymentProvider, name="paymentprovider"))
-    type: Mapped[PaymentType] = mapped_column(SAEnum(PaymentType, name="paymenttype"))
-    status: Mapped[PaymentStatus] = mapped_column(SAEnum(PaymentStatus, name="paymentstatus"), default=PaymentStatus.PENDING)
+    provider: Mapped[PaymentProvider] = mapped_column(SAEnum(PaymentProvider, name="paymentprovider", values_callable=_enum_values))
+    type: Mapped[PaymentType] = mapped_column(SAEnum(PaymentType, name="paymenttype", values_callable=_enum_values))
+    status: Mapped[PaymentStatus] = mapped_column(SAEnum(PaymentStatus, name="paymentstatus", values_callable=_enum_values), default=PaymentStatus.PENDING)
     amount: Mapped[float] = mapped_column(Numeric(10, 2))
     currency: Mapped[str] = mapped_column(String(3), default="CAD")
     stripe_session_id: Mapped[str | None] = mapped_column(String(255), nullable=True)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Button from "@/components/Button";
 import Card from "@/components/Card";
@@ -9,16 +9,54 @@ import { useCart } from "@/components/CartProvider";
 import { siteContent } from "@/content/siteContent";
 import { API } from "@/lib/api";
 
+type Variant = {
+  id: number;
+  size: string;
+  material: string;
+  price_cad: number;
+};
+
+type Product = {
+  name: string;
+  description: string | null;
+  slug: string;
+  variants: Variant[];
+};
+
 export default function ProductDetail({ params }: { params: { slug: string } }) {
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
+  const [personalization, setPersonalization] = useState("");
   const [message, setMessage] = useState("");
   const { add } = useCart();
 
   useEffect(() => {
     fetch(`${API}/products/${params.slug}`)
       .then((r) => r.json())
-      .then(setProduct);
+      .then((data: Product) => {
+        setProduct(data);
+        if (Array.isArray(data?.variants) && data.variants.length > 0) {
+          setSelectedVariantId(data.variants[0].id);
+        }
+      });
   }, [params.slug]);
+
+  const selectedVariant = useMemo(
+    () => product?.variants?.find((v) => v.id === selectedVariantId) || null,
+    [product, selectedVariantId]
+  );
+
+  function handleAddToCart() {
+    if (!product || !selectedVariant) return;
+    const note = personalization.trim() ? ` - ${personalization.trim()}` : "";
+    add({
+      variant_id: selectedVariant.id,
+      quantity: 1,
+      name: `${product.name} ${selectedVariant.size}/${selectedVariant.material}${note}`,
+      price: selectedVariant.price_cad,
+    });
+    setMessage(`Added ${selectedVariant.size}/${selectedVariant.material} to cart`);
+  }
 
   if (!product) {
     return (
@@ -51,16 +89,15 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
             ))}
           </div>
           <Card>
-            <h2 className="text-lg font-bold text-slate-900">{siteContent.product.labels.material}</h2>
+            <h2 className="text-lg font-bold text-slate-900">Variants</h2>
             <div className="mt-4 grid gap-3">
-              {product.variants.map((v: any) => (
+              {product.variants.map((v) => (
                 <button
                   key={v.id}
-                  className="rounded-xl border border-slate-200 p-4 text-left transition hover:border-blue-300 hover:bg-blue-50/50"
-                  onClick={() => {
-                    add({ variant_id: v.id, quantity: 1, name: `${product.name} ${v.size}/${v.material}`, price: v.price_cad });
-                    setMessage(`Added ${v.size} / ${v.material} to cart`);
-                  }}
+                  className={`rounded-xl border p-4 text-left transition ${
+                    selectedVariantId === v.id ? "border-blue-400 bg-blue-50" : "border-slate-200 hover:border-blue-300 hover:bg-blue-50/50"
+                  }`}
+                  onClick={() => setSelectedVariantId(v.id)}
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-slate-900">
@@ -74,9 +111,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <label className="text-sm font-medium text-slate-700">
                 {siteContent.product.labels.material}
-                <select className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
-                  <option>Auto from variant</option>
-                </select>
+                <input className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" value={selectedVariant?.material || ""} readOnly />
               </label>
               <label className="text-sm font-medium text-slate-700">
                 {siteContent.product.labels.color}
@@ -86,18 +121,21 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
               </label>
               <label className="text-sm font-medium text-slate-700">
                 {siteContent.product.labels.size}
-                <select className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
-                  <option>Auto from variant</option>
-                </select>
+                <input className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" value={selectedVariant?.size || ""} readOnly />
               </label>
             </div>
             <label className="mt-4 block text-sm font-medium text-slate-700">
               {siteContent.product.labels.personalization}
-              <input className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" placeholder="Optional note" />
+              <input
+                className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                placeholder="Optional note"
+                value={personalization}
+                onChange={(e) => setPersonalization(e.target.value)}
+              />
             </label>
             {message && <p className="mt-4 text-sm font-medium text-emerald-700">{message}</p>}
-            <div className="mt-5 flex gap-3">
-              <Button href="/cart">{siteContent.product.buttons.addToCart}</Button>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Button onClick={handleAddToCart}>{siteContent.product.buttons.addToCart}</Button>
               <Button href={`/quote?product=${encodeURIComponent(product.name)}`} variant="secondary">
                 {siteContent.product.buttons.customQuote}
               </Button>
