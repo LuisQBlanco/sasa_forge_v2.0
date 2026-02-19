@@ -3,68 +3,78 @@
 - `api`: FastAPI + SQLAlchemy + Alembic + Postgres
 - `web`: Next.js + Tailwind
 - `app`: Expo React Native
-- `infra`: Docker Compose
+- `infra`: Docker Compose + nginx reverse proxy
 
-## Quick start (Docker)
+## Environment setup
+
+Create your local env file from the template:
 
 ```bash
-docker compose -f infra/docker-compose.yml up --build
+copy .env.example .env
 ```
 
-API: `http://localhost:8000`
+## Local dev (Windows, one click)
 
-## Local dev
+Double-click:
 
-### API
-
-```bash
-cd api
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
-pip install -r requirements.txt
-alembic upgrade head
-python scripts/seed_products.py
-uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+```text
+run-dev.bat
 ```
 
-### Create first OWNER
+This runs:
 
 ```bash
-cd api
-python scripts/create_admin_user.py --email owner@sasa.local --password "StrongPass123!" --role OWNER
+docker compose -f infra/docker-compose.dev.yml up --build
 ```
 
-### Web
+## Local prod-like stack (Windows)
 
-```bash
-cd web
-npm install
-npm run dev
+Double-click:
+
+```text
+run-prod.bat
 ```
 
-### Mobile app
+This runs:
 
 ```bash
-cd app
-npm install
-npx expo start
+docker compose -f infra/docker-compose.prod.yml up -d --build
 ```
 
-## Stripe setup
+## Stop stacks
 
-Set `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` in `api/.env`.
+Double-click:
 
-Forward test events:
-
-```bash
-stripe listen --forward-to localhost:8000/webhooks/stripe
+```text
+stop.bat
 ```
 
-## Replit API run
+## Useful scripts
+
+- `logs.bat` -> `docker compose -f infra/docker-compose.dev.yml logs -f --tail=200`
+- `rebuild.bat` -> rebuild dev and prod images with `--no-cache`
+
+## URLs
+
+- `http://localhost/`
+- `http://localhost/api/health`
+- `http://localhost/api/docs`
+
+Only nginx publishes host ports. API and web are reached through nginx routing:
+
+- `/` -> web
+- `/api/*` -> api
+
+## Create first OWNER user (inside container)
 
 ```bash
-cd api
-pip install -r requirements.txt
-alembic upgrade head
-uvicorn api.main:app --host 0.0.0.0 --port 8000
+docker compose -f infra/docker-compose.dev.yml exec api python scripts/create_admin_user.py --email owner@sasa.local --password StrongPass123!
+```
+
+## Optional mobile container (Expo)
+
+The mobile service is optional and disabled by default. Start it with the `mobile` profile:
+
+```bash
+docker compose -f infra/docker-compose.dev.yml --profile mobile up --build
 ```

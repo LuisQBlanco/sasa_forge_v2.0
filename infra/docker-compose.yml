@@ -1,50 +1,38 @@
+name: sasa_forge_legacy_dev
+
+# Backward-compatible default stack.
+# Prefer explicit files:
+# - docker compose -f infra/docker-compose.dev.yml up --build
+# - docker compose -f infra/docker-compose.prod.yml up -d --build
 services:
   db:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: sasa_forge
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - sasa_pg_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d sasa_forge"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
+    extends:
+      file: docker-compose.dev.yml
+      service: db
 
   api:
-    build:
-      context: ../api
-      dockerfile: Dockerfile
-    env_file:
-      - ../api/.env.example
-    environment:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/sasa_forge
-    ports:
-      - "8000:8000"
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: on-failure
-    volumes:
-      - ../api/uploads:/app/uploads
+    extends:
+      file: docker-compose.dev.yml
+      service: api
 
   web:
-    build:
-      context: ../web
-      dockerfile: Dockerfile
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
-      INTERNAL_API_URL: http://api:8000
-    ports:
-      - "3000:3000"
-    depends_on:
-      api:
-        condition: service_started
-    restart: on-failure
+    extends:
+      file: docker-compose.dev.yml
+      service: web
+
+  nginx:
+    extends:
+      file: docker-compose.dev.yml
+      service: nginx
+
+  mobile:
+    extends:
+      file: docker-compose.dev.yml
+      service: mobile
+    profiles:
+      - mobile
 
 volumes:
   sasa_pg_data:
+  web_node_modules:
+  app_node_modules:
