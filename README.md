@@ -71,6 +71,18 @@ Only nginx publishes host ports. API and web are reached through nginx routing:
 docker compose -f infra/docker-compose.dev.yml exec api python scripts/create_admin_user.py --email owner@sasa.local --password StrongPass123!
 ```
 
+## Sign in to Admin
+
+1. Make sure dev stack is running with `run-dev.bat`.
+2. Create an admin user:
+
+```bash
+docker compose -f infra/docker-compose.dev.yml exec api python scripts/create_admin_user.py --email owner@sasa.local --password StrongPass123! --role OWNER
+```
+
+3. Open `http://localhost/admin/login`.
+4. Sign in with the same email and password used in the command above.
+
 ## Optional mobile container (Expo)
 
 The mobile service is optional and disabled by default. Start it with the `mobile` profile:
