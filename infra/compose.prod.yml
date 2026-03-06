@@ -1,0 +1,88 @@
+version: "2.4"
+
+services:
+  db:
+    image: postgres:16-alpine
+    env_file:
+      - ../.env.prod
+    volumes:
+      - sasa_forge_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - sasa_forge_v2_net
+
+  api:
+    build:
+      context: ../api
+      dockerfile: Dockerfile
+    command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    env_file:
+      - ../.env.prod
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - sasa_forge_api_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+    networks:
+      - sasa_forge_v2_net
+
+  web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+    env_file:
+      - ../.env.prod
+    environment:
+      NODE_ENV: "production"
+      NEXT_PUBLIC_API_URL: "/3dforce/api"
+      INTERNAL_API_URL: "http://api:8000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:3000/3dforce || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - sasa_forge_v2_net
+
+  reverse-proxy:
+    image: nginx:1.27-alpine
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "127.0.0.1:8081:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - sasa_forge_v2_net
+
+volumes:
+  sasa_forge_pg_data:
+  sasa_forge_api_uploads:
+
+networks:
+  sasa_forge_v2_net:
+    driver: bridge
