@@ -55,15 +55,12 @@ git pull --ff-only origin main
 echo "[2/5] Pulling latest images (if defined)..."
 "${COMPOSE_BIN[@]}" -p "$PROJECT_NAME" -f "$COMPOSE_FILE" pull || true
 
-echo "[3/5] Rebuilding containers..."
-"${COMPOSE_BIN[@]}" -p "$PROJECT_NAME" -f "$COMPOSE_FILE" build
-
-echo "[4/5] Starting/updating required services..."
-# Uses compose reconciliation; only changed services are recreated.
+echo "[3/5] Building and starting/updating required services..."
+# Single-pass reconciliation: build once and recreate only changed services.
 "${COMPOSE_BIN[@]}" -p "$PROJECT_NAME" -f "$COMPOSE_FILE" up -d --build
 
-echo "[5/5] Container status..."
+echo "[4/5] Container status..."
 "${COMPOSE_BIN[@]}" -p "$PROJECT_NAME" -f "$COMPOSE_FILE" ps
 docker ps
 
-echo "Deploy script finished successfully."
+echo "[5/5] Deploy script finished successfully."
