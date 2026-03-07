@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 PROJECT_DIR="/home/devluisq/project/sasa_forge_v2.0"
-COMPOSE_FILE="docker-compose.prod.yml"
+COMPOSE_FILE="infra/compose.prod.yml"
 
 cd "$PROJECT_DIR"
 
