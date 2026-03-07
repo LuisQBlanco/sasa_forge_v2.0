@@ -14,9 +14,10 @@ jobs:
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.DROPLET_HOST }}
+          port: 22
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
-          script_stop: true
+          command_timeout: 30m
           script: |
             set -euo pipefail
             cd /home/devluisq/project/sasa_forge_v2.0
