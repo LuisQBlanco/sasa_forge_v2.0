@@ -59,8 +59,16 @@ echo "[3/5] Building and starting/updating required services..."
 # Single-pass reconciliation: build once and recreate only changed services.
 "${COMPOSE_BIN[@]}" -p "$PROJECT_NAME" -f "$COMPOSE_FILE" up -d --build
 
-echo "[4/5] Container status..."
+echo "[4/6] Reloading reverse-proxy nginx config (if running)..."
+REVERSE_PROXY_CONTAINER="${PROJECT_NAME}_reverse-proxy_1"
+if docker ps --format '{{.Names}}' | grep -qx "$REVERSE_PROXY_CONTAINER"; then
+  docker exec "$REVERSE_PROXY_CONTAINER" nginx -s reload || true
+else
+  echo "WARN: ${REVERSE_PROXY_CONTAINER} not running; skipping nginx reload."
+fi
+
+echo "[5/6] Container status..."
 "${COMPOSE_BIN[@]}" -p "$PROJECT_NAME" -f "$COMPOSE_FILE" ps
 docker ps
 
-echo "[5/5] Deploy script finished successfully."
+echo "[6/6] Deploy script finished successfully."
