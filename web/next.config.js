@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  basePath: "/3dforce",
-  assetPrefix: "/3dforce",
+  basePath: "/3dforge",
+  assetPrefix: "/3dforge",
 };
 
 module.exports = nextConfig;
