@@ -65,6 +65,58 @@ Only nginx publishes host ports. API and web are reached through nginx routing:
 - `/` -> web
 - `/api/*` -> api
 
+## Production domain + TLS setup
+
+This repo keeps one shared Docker stack (`reverse-proxy`, `web`, `api`, `db`).
+Host nginx should proxy all app traffic to `http://127.0.0.1:8081`.
+
+### Required DNS
+
+- `3dforge.sasasolutions.ca` -> `A` record to droplet public IP
+- `www.3dforge.sasasolutions.ca` -> `CNAME` to `3dforge.sasasolutions.ca`
+
+### Host nginx config
+
+Use the host template:
+
+- `infra/nginx/host.sasasolutions.conf.example`
+
+It includes:
+
+- main app server names:
+  - `sasasolutions.ca`
+  - `www.sasasolutions.ca`
+  - `3dforge.sasasolutions.ca`
+- dedicated `www.3dforge.sasasolutions.ca` redirect block on `80` and `443`:
+  - `301` -> `https://3dforge.sasasolutions.ca$request_uri`
+
+### Certbot command (all required domains)
+
+```bash
+sudo certbot --nginx \
+  -d sasasolutions.ca \
+  -d www.sasasolutions.ca \
+  -d 3dforge.sasasolutions.ca \
+  -d www.3dforge.sasasolutions.ca
+```
+
+### Validation
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+
+curl -I https://sasasolutions.ca/
+curl -I https://www.sasasolutions.ca/
+curl -I https://3dforge.sasasolutions.ca/
+curl -I https://www.3dforge.sasasolutions.ca/
+
+curl -I https://www.3dforge.sasasolutions.ca/test-path
+# Expect: 301 Location: https://3dforge.sasasolutions.ca/test-path
+
+curl -fsS https://3dforge.sasasolutions.ca/api/health
+```
+
 ## Create first OWNER user (inside container)
 
 ```bash

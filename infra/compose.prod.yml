@@ -61,13 +61,13 @@ services:
       - ../.env.prod
     environment:
       NODE_ENV: "production"
-      NEXT_PUBLIC_API_URL: "/3dforge/api"
+      NEXT_PUBLIC_API_URL: "/api"
       INTERNAL_API_URL: "http://api:8000"
     depends_on:
       api:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:3000/3dforge || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:3000/ || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 10
