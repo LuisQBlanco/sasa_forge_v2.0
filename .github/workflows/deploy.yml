@@ -4,13 +4,25 @@ on:
   push:
     branches:
       - main
+      - develop
   workflow_dispatch:
+    inputs:
+      deploy_branch:
+        description: "Branch to deploy"
+        required: true
+        default: "develop"
+        type: choice
+        options:
+          - develop
+          - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy on droplet via SSH
+        env:
+          TARGET_BRANCH: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_branch || github.ref_name }}
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.DROPLET_HOST }}
@@ -18,32 +30,9 @@ jobs:
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
           command_timeout: 30m
+          envs: TARGET_BRANCH
           script: |
             set -euo pipefail
             cd /home/devluisq/project/sasa_forge_v2.0
             chmod +x deploy.sh
-            ./deploy.sh
-
-            echo "[post-deploy] Waiting for API health..."
-            for i in $(seq 1 20); do
-              if curl -fsS http://127.0.0.1:8081/api/health | grep -q '"ok":true'; then
-                echo "[post-deploy] API healthy."
-                break
-              fi
-
-              if [ "$i" -eq 20 ]; then
-                echo "[post-deploy] ERROR: API healthcheck did not pass in time."
-                exit 1
-              fi
-
-              sleep 3
-            done
-
-            echo "[post-deploy] Checking web endpoint..."
-            WEB_STATUS="$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8081/)"
-            if [ "$WEB_STATUS" != "200" ]; then
-              echo "[post-deploy] ERROR: Web endpoint returned HTTP $WEB_STATUS"
-              exit 1
-            fi
-
-            echo "[post-deploy] Healthchecks passed."
+            ./deploy.sh "${TARGET_BRANCH}"

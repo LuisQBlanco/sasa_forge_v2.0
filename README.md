@@ -27,6 +27,14 @@ This runs:
 docker compose -f infra/docker-compose.dev.yml up --build
 ```
 
+Recommended Git flow for local work:
+
+```bash
+git checkout develop
+git pull origin develop
+git checkout -b feature/your-change
+```
+
 ## Local prod-like stack (Windows)
 
 Double-click:
@@ -65,15 +73,18 @@ Only nginx publishes host ports. API and web are reached through nginx routing:
 - `/` -> web
 - `/api/*` -> api
 
-## Production domain + TLS setup
+## Domain routing + TLS setup
 
-This repo keeps one shared Docker stack (`reverse-proxy`, `web`, `api`, `db`).
-Host nginx should proxy all app traffic to `http://127.0.0.1:8081`.
+This repo keeps the same shared stack architecture (`reverse-proxy`, `web`, `api`, `db`) with one stack per branch/environment on different localhost ports:
+
+- `main` (production) -> `127.0.0.1:8081`
+- `develop` (staging/dev) -> `127.0.0.1:8082`
 
 ### Required DNS
 
 - `3dforge.sasasolutions.ca` -> `A` record to droplet public IP
 - `www.3dforge.sasasolutions.ca` -> `CNAME` to `3dforge.sasasolutions.ca`
+- `dev.3dforge.sasasolutions.ca` -> `A` record to droplet public IP
 
 ### Host nginx config
 
@@ -89,6 +100,10 @@ It includes:
   - `3dforge.sasasolutions.ca`
 - dedicated `www.3dforge.sasasolutions.ca` redirect block on `80` and `443`:
   - `301` -> `https://3dforge.sasasolutions.ca$request_uri`
+- development subdomain support:
+  - `dev.sasasolutions.ca`
+  - `dev.3dforge.sasasolutions.ca`
+  - `dev.3dforge.sasasolutions.ca` should proxy to `http://127.0.0.1:8082`
 
 ### Certbot command (all required domains)
 
@@ -96,8 +111,10 @@ It includes:
 sudo certbot --nginx \
   -d sasasolutions.ca \
   -d www.sasasolutions.ca \
+  -d dev.sasasolutions.ca \
   -d 3dforge.sasasolutions.ca \
-  -d www.3dforge.sasasolutions.ca
+  -d www.3dforge.sasasolutions.ca \
+  -d dev.3dforge.sasasolutions.ca
 ```
 
 ### Validation
@@ -108,13 +125,82 @@ sudo systemctl reload nginx
 
 curl -I https://sasasolutions.ca/
 curl -I https://www.sasasolutions.ca/
+curl -I https://dev.sasasolutions.ca/
 curl -I https://3dforge.sasasolutions.ca/
 curl -I https://www.3dforge.sasasolutions.ca/
+curl -I https://dev.3dforge.sasasolutions.ca/
 
 curl -I https://www.3dforge.sasasolutions.ca/test-path
 # Expect: 301 Location: https://3dforge.sasasolutions.ca/test-path
 
 curl -fsS https://3dforge.sasasolutions.ca/api/health
+curl -fsS https://dev.3dforge.sasasolutions.ca/api/health
+```
+
+## Branch promotion workflow (dev -> prod)
+
+Branch strategy:
+
+- `main` = production (`3dforge.sasasolutions.ca`)
+- `develop` = staging/dev (`dev.3dforge.sasasolutions.ca`)
+- `feature/*` = temporary branches
+
+Promotion path:
+
+1. Create and work in a feature branch from `develop`.
+2. Merge feature branch into `develop`.
+3. Deploy `develop` to `dev.3dforge.sasasolutions.ca` and validate.
+4. Merge `develop` into `main`.
+5. Deploy `main` to `3dforge.sasasolutions.ca`.
+
+Recommended commands:
+
+```bash
+# Start a feature
+git checkout develop
+git pull origin develop
+git checkout -b feature/new-capability
+
+# Finish feature -> develop
+git add -A
+git commit -m "Add new capability"
+git push -u origin feature/new-capability
+# open PR: feature/new-capability -> develop
+
+# Promote develop -> main after testing
+git checkout main
+git pull origin main
+git merge --no-ff develop
+git push origin main
+```
+
+## Branch-aware deploy script
+
+`deploy.sh` now supports branch-targeted deployments using the same compose file:
+
+```bash
+# Deploy staging/dev stack (port 8082)
+./deploy.sh develop
+
+# Deploy production stack (port 8081)
+./deploy.sh main
+```
+
+Notes:
+
+- `develop` deploy defaults:
+  - compose project: `sasa_forge_v2_dev`
+  - env file: `.env.prod.develop` (fallback to `.env.prod` if missing)
+  - dev marker in UI: `DEV / 3D FORGE`
+- `main` deploy defaults:
+  - compose project: `sasa_forge_v2`
+  - env file: `.env.prod`
+  - no dev marker
+
+For `develop` environment values, create:
+
+```bash
+cp .env.prod.develop.example .env.prod.develop
 ```
 
 ## Create first OWNER user (inside container)

@@ -2,10 +2,17 @@ import Container from "@/components/Container";
 import { siteContent } from "@/content/siteContent";
 
 export default function TopBar() {
+  const envLabel = process.env.NEXT_PUBLIC_ENV_LABEL?.trim();
+
   return (
     <div className="bg-blue-700 text-blue-50">
       <Container className="flex flex-col gap-2 py-2 text-xs sm:flex-row sm:items-center sm:justify-between sm:text-sm">
         <div className="flex flex-wrap items-center gap-3">
+          {envLabel ? (
+            <span className="rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900 sm:text-xs">
+              {envLabel}
+            </span>
+          ) : null}
           <span>{siteContent.global.topBarLeft}</span>
           <span className="hidden h-1 w-1 rounded-full bg-blue-200 sm:block" />
           <span>{siteContent.global.topBarRight}</span>
