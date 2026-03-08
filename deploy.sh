@@ -59,21 +59,6 @@ if [[ ! -f "$ENV_FILE" ]]; then
   fi
 fi
 
-read_env_value() {
-  local key="$1"
-  local file="$2"
-  local value
-  value="$(grep -E "^${key}=" "$file" 2>/dev/null | tail -n 1 | cut -d= -f2- || true)"
-  printf "%s" "$value"
-}
-
-if [[ -z "${COMPOSE_PROJECT_NAME:-}" ]]; then
-  ENV_PROJECT_NAME="$(read_env_value COMPOSE_PROJECT_NAME "$ENV_FILE")"
-  if [[ -n "$ENV_PROJECT_NAME" ]]; then
-    PROJECT_NAME="$ENV_PROJECT_NAME"
-  fi
-fi
-
 APP_ENV_FILE="$(basename "$ENV_FILE")"
 
 echo "Target branch: $TARGET_BRANCH"
